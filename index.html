@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tus flores amarillas 💛</title>
+<style>
+  /* ============ TOKENS ============ */
+  :root{
+    --sky-top:#241640;
+    --sky-mid:#7a3b57;
+    --sky-low:#c8683f;
+    --sky-horizon:#f4a259;
+    --sun-glow:#ffd66b;
+    --gold:#f7c948;
+    --gold-deep:#e8a33d;
+    --petal-deep:#d68c2a;
+    --leaf:#5b7c3f;
+    --leaf-dark:#3a5227;
+    --cream:#fff6e6;
+    --ink:#2c1c10;
+    --paper:#fff8e9;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; width:100%; height:100%;
+    overflow:hidden;
+    font-family: Georgia, 'Palatino Linotype', 'Iowan Old Style', serif;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  body{ position:relative; background:var(--sky-top); }
+
+  .ui-font{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+
+  /* ============ ESCENA ============ */
+  #scene{
+    position:fixed; inset:0;
+    background: linear-gradient(180deg,
+      var(--sky-top) 0%,
+      var(--sky-mid) 42%,
+      var(--sky-low) 68%,
+      var(--sky-horizon) 100%);
+    overflow:hidden;
+  }
+  #sun{
+    position:absolute; left:50%; top:52%;
+    width:38vmax; height:38vmax;
+    transform:translate(-50%,-50%);
+    border-radius:50%;
+    background: radial-gradient(circle, var(--sun-glow) 0%, rgba(255,214,107,0.35) 40%, rgba(255,214,107,0) 70%);
+    animation: sunPulse 6s ease-in-out infinite;
+    pointer-events:none;
+  }
+  @keyframes sunPulse{ 0%,100%{opacity:.55;} 50%{opacity:.9;} }
+
+  #ground{
+    position:absolute; left:0; right:0; bottom:0; height:38%;
+    background: linear-gradient(180deg, rgba(91,124,63,0) 0%, var(--leaf-dark) 65%, #2a3b1c 100%);
+    pointer-events:none;
+  }
+
+  #stars{ position:absolute; inset:0; pointer-events:none; }
+  .star{
+    position:absolute; width:2px; height:2px; border-radius:50%;
+    background:var(--cream); opacity:.6;
+    animation: twinkle 3.5s ease-in-out infinite;
+  }
+  @keyframes twinkle{ 0%,100%{opacity:.1;} 50%{opacity:.9;} }
+
+  /* ============ INTRO ============ */
+  #intro{
+    position:fixed; inset:0; z-index:20;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding: 8vh 6vw;
+    transition: opacity 1.1s ease, visibility 1.1s;
+  }
+  #intro.hidden{ opacity:0; visibility:hidden; pointer-events:none; }
+  #intro h1{
+    color:var(--cream);
+    font-weight:400;
+    font-size: clamp(1.5rem, 4.4vw, 2.6rem);
+    line-height:1.4;
+    margin:0 0 .6em 0;
+    text-shadow: 0 2px 18px rgba(0,0,0,.35);
+    max-width: 18ch;
+  }
+  #intro p{
+    color: var(--gold);
+    font-size: clamp(1.05rem, 3vw, 1.4rem);
+    font-style: italic;
+    margin: 0 0 2.2em 0;
+    text-shadow: 0 2px 14px rgba(0,0,0,.3);
+  }
+  #openGift{
+    font-family: inherit;
+    font-size: clamp(1rem, 2.6vw, 1.2rem);
+    color: var(--ink);
+    background: linear-gradient(180deg, #ffe9a8, var(--gold));
+    border: none;
+    padding: 0.95em 2.2em;
+    border-radius: 999px;
+    cursor:pointer;
+    box-shadow: 0 8px 24px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.6);
+    letter-spacing: .3px;
+    transition: transform .25s ease, box-shadow .25s ease;
+  }
+  #openGift:hover{ transform: translateY(-2px) scale(1.03); box-shadow: 0 12px 30px rgba(0,0,0,.4); }
+  #openGift:active{ transform: translateY(0) scale(.97); }
+
+  /* ============ JARDÍN ============ */
+  #garden{
+    position:fixed; inset:0; z-index:5;
+  }
+  .flower{
+    position:absolute; bottom:0;
+    transform-origin: 50% 100%;
+    opacity:0;
+    animation: grow 1.4s cubic-bezier(.2,.9,.25,1) forwards;
+    cursor:pointer;
+  }
+  @keyframes grow{ from{ opacity:0; transform: scale(.12) translateY(6%);} to{ opacity:1; transform: scale(1) translateY(0);} }
+
+  .sway{
+    transform-origin: 50% 100%;
+    animation: sway 5s ease-in-out infinite;
+  }
+  @keyframes sway{ 0%,100%{ transform: rotate(-3deg);} 50%{ transform: rotate(3deg);} }
+
+  .flower.pulse .sway{ animation: pulse .6s ease; }
+  @keyframes pulse{
+    0%{ transform: rotate(0) scale(1); }
+    30%{ transform: rotate(-6deg) scale(1.12); }
+    60%{ transform: rotate(5deg) scale(.96); }
+    100%{ transform: rotate(0) scale(1); }
+  }
+
+  .flower svg{ display:block; overflow:visible; }
+
+  /* pétalos cayendo */
+  .petal{
+    position:absolute; top:-5vh;
+    width:14px; height:10px;
+    background: linear-gradient(135deg, var(--gold), var(--petal-deep));
+    border-radius: 50% 0 50% 50%;
+    opacity:0;
+    pointer-events:none;
+    animation-name: fall;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+  }
+  @keyframes fall{
+    0%{ transform: translate(0,0) rotate(0deg); opacity:0; }
+    8%{ opacity:.95; }
+    100%{ transform: translate(var(--driftx), 112vh) rotate(380deg); opacity:.85; }
+  }
+
+  /* brillos */
+  .sparkle{
+    position:absolute; width:6px; height:6px; border-radius:50%;
+    background: radial-gradient(circle, #fff8d8 0%, var(--gold) 60%, rgba(255,214,107,0) 100%);
+    pointer-events:none;
+    animation: twinkleUp 1.8s ease-out forwards;
+  }
+  @keyframes twinkleUp{
+    0%{ opacity:0; transform: scale(.3) translateY(0); }
+    30%{ opacity:1; transform: scale(1.1) translateY(-6px); }
+    100%{ opacity:0; transform: scale(.5) translateY(-26px); }
+  }
+
+  /* ============ TARJETA MENSAJE ============ */
+  #messageCard{
+    position:fixed; left:50%; bottom:4vh; z-index:15;
+    transform: translate(-50%, 40px);
+    width:min(560px, 88vw);
+    background: linear-gradient(180deg, var(--paper), #fdeecb);
+    border: 1px solid rgba(232,163,61,.5);
+    border-radius: 18px;
+    padding: 1.8em 2em;
+    box-shadow: 0 18px 50px rgba(30,15,5,.35);
+    text-align:center;
+    opacity:0;
+    pointer-events:none;
+    transition: opacity 1.2s ease, transform 1.2s cubic-bezier(.2,.8,.2,1);
+    max-height: 62vh;
+    overflow-y:auto;
+  }
+  #messageCard.show{ opacity:1; transform: translate(-50%, 0); pointer-events:auto; }
+  #messageCard p{
+    color: var(--ink);
+    font-size: clamp(.95rem, 2.1vw, 1.08rem);
+    line-height:1.7;
+    font-style: italic;
+    margin: 0 0 .9em 0;
+    white-space: pre-line;
+  }
+  #messageCard .para{
+    font-style: normal;
+    font-weight:700;
+    color: var(--petal-deep);
+    font-size: clamp(1rem, 2.3vw, 1.2rem);
+    margin-top: 1em;
+  }
+  #messageCard .final{
+    margin-top: 1.1em;
+    padding-top: 1em;
+    border-top: 1px dashed rgba(232,163,61,.6);
+    color:#6b4a1e;
+  }
+
+  /* ============ CONTROLES ============ */
+  #controls{
+    position:fixed; right:16px; bottom:16px; z-index:25;
+    display:flex; gap:10px;
+    opacity:0; transition: opacity 1s ease;
+  }
+  #controls.show{ opacity:1; }
+  .ctrl-btn{
+    width:44px; height:44px; border-radius:50%; border:none;
+    background: rgba(255,255,255,.18);
+    backdrop-filter: blur(6px);
+    color: var(--cream);
+    font-size:1.15rem;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    box-shadow: 0 4px 14px rgba(0,0,0,.25);
+    transition: transform .2s ease, background .2s ease;
+  }
+  .ctrl-btn:hover{ transform: scale(1.08); background: rgba(255,255,255,.28); }
+  .ctrl-btn:active{ transform: scale(.94); }
+
+  /* ============ DEDICATORIA FINAL ============ */
+  #dedication{
+    margin-top: 1.2em;
+    padding-top: 1.1em;
+    border-top: 1px dashed rgba(232,163,61,.6);
+  }
+  .ded-title{
+    color: var(--petal-deep);
+    font-size: clamp(1.25rem, 3.4vw, 1.7rem);
+    letter-spacing: .5px;
+    margin-bottom: .45em;
+  }
+  .ded-number{
+    width: 62px; height: 62px; margin: .2em auto .5em;
+    display:flex; align-items:center; justify-content:center;
+    border-radius: 50%;
+    background: radial-gradient(circle at 38% 32%, #fff3c4, var(--gold) 55%, var(--gold-deep) 100%);
+    color: #5a3a12;
+    font-size: 1.65rem;
+    box-shadow: 0 8px 22px rgba(120,70,10,.35), inset 0 1px 0 rgba(255,255,255,.75);
+    animation: dedPulse 3.4s ease-in-out infinite;
+  }
+  @keyframes dedPulse{
+    0%,100%{ transform: scale(1); box-shadow: 0 8px 22px rgba(120,70,10,.35), inset 0 1px 0 rgba(255,255,255,.75); }
+    50%{ transform: scale(1.07); box-shadow: 0 12px 30px rgba(200,140,30,.5), inset 0 1px 0 rgba(255,255,255,.85); }
+  }
+  .ded-names{
+    color:#6b4a1e;
+    font-style: italic;
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
+    letter-spacing: 1.2px;
+  }
+
+  /* ============ FOTO SORPRESA ============ */
+  #photoFrame{
+    position:fixed; left:50%; top:33%; z-index:12;
+    width: min(300px, 62vw);
+    transform: translate(-50%,-50%) scale(.72);
+    opacity:0; visibility:hidden; pointer-events:none;
+    transition: opacity 3.4s ease, transform 3.4s cubic-bezier(.2,.8,.2,1),
+                top 1.6s ease, width 1.6s ease;
+  }
+  #photoFrame.show{ opacity:1; visibility:visible; transform: translate(-50%,-50%) scale(1); }
+  body.msg-on #photoFrame{ top: 24%; width: min(240px, 50vw); }
+
+  .photo-glow{
+    position:absolute; inset:-26px; border-radius:50%;
+    background: radial-gradient(circle, rgba(255,214,107,.55) 0%, rgba(255,214,107,.18) 45%, rgba(255,214,107,0) 72%);
+    filter: blur(6px);
+    animation: glowBreath 5.5s ease-in-out infinite;
+    pointer-events:none;
+  }
+  @keyframes glowBreath{ 0%,100%{ opacity:.55; transform: scale(1);} 50%{ opacity:.95; transform: scale(1.06);} }
+
+  .photo-inner{
+    position:relative;
+    background: linear-gradient(180deg, #fffdf5, #fdeecb);
+    padding: 13px 13px 0;
+    border-radius: 16px;
+    box-shadow:
+      0 26px 60px rgba(25,12,0,.55),
+      0 0 0 1px rgba(232,163,61,.55),
+      inset 0 1px 0 rgba(255,255,255,.85);
+    transform: rotate(-2.2deg);
+    animation: photoFloat 8s ease-in-out infinite;
+  }
+  @keyframes photoFloat{
+    0%,100%{ transform: rotate(-2.2deg) translateY(0); }
+    50%{ transform: rotate(1.6deg) translateY(-9px); }
+  }
+  .photo-inner img{
+    display:block; width:100%; height:auto;
+    border-radius: 9px;
+    box-shadow: 0 4px 14px rgba(40,20,0,.28);
+  }
+  .photo-caption{
+    color:#6b4a1e;
+    font-style: italic;
+    font-size: clamp(.8rem, 2.1vw, .95rem);
+    text-align:center;
+    padding: .65em 0 .75em;
+    letter-spacing: .4px;
+  }
+  .photo-flower{
+    position:absolute; width:56px; height:56px;
+    pointer-events:none;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,.35));
+    animation: sway 6s ease-in-out infinite;
+    transform-origin: 50% 80%;
+  }
+  .ph-tl{ left:-26px; top:-24px; }
+  .ph-tr{ right:-26px; top:-16px; width:44px; height:44px; animation-duration: 7.2s; }
+  .ph-bl{ left:-20px; bottom:-18px; width:46px; height:46px; animation-duration: 6.6s; }
+  .ph-br{ right:-24px; bottom:-26px; animation-duration: 8s; }
+
+  @media (max-width: 480px){
+    #photoFrame{ top: 30%; }
+    body.msg-on #photoFrame{ top: 21%; width: min(200px, 48vw); }
+    .photo-flower{ width:42px; height:42px; }
+    .ph-tr,.ph-bl{ width:34px; height:34px; }
+  }
+
+  /* ============ FOTOS FLOTANTES (interludio) ============ */
+  .floatPhoto{
+    position:fixed; z-index:11;
+    width: min(190px, 42vw);
+    opacity:0; pointer-events:none;
+    animation-name: floatPhotoIn;
+    animation-timing-function: ease;
+    animation-fill-mode: forwards;
+  }
+  .fp-inner{
+    position:relative;
+    background: linear-gradient(180deg,#fffdf5,#fdeecb);
+    padding: 9px 9px 0;
+    border-radius: 12px;
+    box-shadow: 0 18px 42px rgba(25,12,0,.5), 0 0 0 1px rgba(232,163,61,.5), inset 0 1px 0 rgba(255,255,255,.8);
+  }
+  .fp-inner img{ display:block; width:100%; height:auto; border-radius:7px; }
+  .fp-cap{
+    color:#6b4a1e; font-style:italic; text-align:center;
+    font-size: .78rem; padding: .5em 0 .6em; letter-spacing:.3px;
+  }
+  .fp-glow{
+    position:absolute; inset:-18px; border-radius:50%;
+    background: radial-gradient(circle, rgba(255,214,107,.45) 0%, rgba(255,214,107,0) 70%);
+    filter: blur(5px); pointer-events:none;
+  }
+  @keyframes floatPhotoIn{
+    0%  { opacity:0; transform: translateY(30px) scale(.84) rotate(var(--rot,0deg)); }
+    16% { opacity:1; transform: translateY(0) scale(1) rotate(var(--rot,0deg)); }
+    76% { opacity:1; transform: translateY(-14px) scale(1.03) rotate(var(--rot,0deg)); }
+    100%{ opacity:0; transform: translateY(-34px) scale(.98) rotate(var(--rot,0deg)); }
+  }
+
+  /* ============ FIRMA FLOTANTE "Vy & JR 11" ============ */
+  .loveTag{
+    position:fixed; z-index:13;
+    color: var(--cream);
+    font-size: clamp(1.15rem, 3.6vw, 1.9rem);
+    letter-spacing: 1.5px;
+    white-space: nowrap;
+    opacity:0; pointer-events:none;
+    text-shadow: 0 0 22px rgba(247,201,72,.95), 0 0 46px rgba(232,163,61,.55), 0 2px 10px rgba(0,0,0,.5);
+    animation: tagUp 9.5s ease forwards;
+  }
+  @keyframes tagUp{
+    0%  { opacity:0; transform: translateY(18px) scale(.82); }
+    18% { opacity:1; transform: translateY(0) scale(1); }
+    72% { opacity:1; transform: translateY(-22px) scale(1.04); }
+    100%{ opacity:0; transform: translateY(-52px) scale(.95); }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .sway, .flower, .petal, .sparkle, #sun, .photo-inner, .photo-glow, .photo-flower, .ded-number{ animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+  }
+
+  @media (max-width: 480px){
+    #messageCard{ padding: 1.4em 1.3em; bottom: 2vh; }
+  }
+</style>
+</head>
+<body>
+
+<div id="scene">
+  <div id="stars"></div>
+  <div id="sun"></div>
+  <div id="ground"></div>
+</div>
+
+<div id="garden"></div>
+
+<div id="intro">
+  <h1 id="introLine1"></h1>
+  <p id="introLine2"></p>
+  <button id="openGift" class="ui-font"></button>
+</div>
+
+<div id="photoFrame">
+  <div class="photo-glow"></div>
+  <div class="photo-inner">
+    <img id="photoImg" alt="Nosotros 💛">
+    <div class="photo-caption" id="photoCaption"></div>
+  </div>
+</div>
+
+<div id="messageCard">
+  <p id="msgBody"></p>
+  <p class="para" id="msgPara"></p>
+  <p class="final" id="msgFinal"></p>
+  <div id="dedication">
+    <div class="ded-title" id="dedTitle"></div>
+    <div class="ded-number" id="dedNumber"></div>
+    <div class="ded-names" id="dedNames"></div>
+  </div>
+</div>
+
+<div id="controls">
+  <button class="ctrl-btn" id="musicBtn" title="Música">🎵</button>
+  <button class="ctrl-btn" id="replayBtn" title="Repetir">↺</button>
+</div>
+
+<audio id="bgAudio" loop preload="auto"></audio>
+
+<script>
+(function(){
+  "use strict";
+
+  /* =========================================================
+     EDITA AQUÍ TU MENSAJE PERSONALIZADO
+  ========================================================== */
+  const CONFIG = {
+    nombre: "Mi Amor", // <-- cambia el nombre de la persona especial
+
+    introLinea1: "Este año no pude comprarte flores...",
+    introLinea2: "pero no quería dejarte sin tus flores amarillas 💛",
+    textoBoton: "Abre tu regalo 🌻",
+
+    mensaje:
+`No serán flores que puedas poner en un florero,
+pero las hice para que no te quedaras sin tus flores amarillas. 💛
+
+Porque aunque hoy no pueda comprarte un ramo,
+quería encontrar otra manera de decirte:
+pensé en ti.`,
+
+    fraseFinal:
+`Quizá no pude darte flores amarillas en tus manos...
+pero sí pude hacer que aparecieran para ti aquí. 🌻💛`,
+
+    // ---- Dedicatoria final ----
+    dedicatoriaTitulo: "Mi Octavito 💛",
+    dedicatoriaNumero: "11",
+    dedicatoriaNombres: "Daulin & Vilmin",
+
+    // ---- Fotos que aparecen durante la canción (misma carpeta) ----
+    fotosFlotantes: ["foto1.jpeg", "foto2.jpeg", "foto3.jpeg"],
+    // Si tus fotos son .jpg o .png, la página las buscará sola con estas extensiones:
+    extensionesAlternativas: [".jpg", ".png", ".jpeg", ".webp"],
+    piesDeFotoFlotante: ["Vy & JR 💛", "11 💛", "Nosotros 🌻"],
+
+    // ---- Firma que aparece varias veces durante la canción ----
+    firmaFlotante: "Vy & JR 11 💛",
+
+    // ---- Archivos que van en la MISMA carpeta que este index.html ----
+    archivoMusica: "musica.mp3",
+    archivoFoto: "foto.jpeg",
+    pieDeFoto: "Daulin & Vilmin 💛",
+
+    // ---- Duración de la experiencia (en segundos) ----
+    // La experiencia completa termina aquí (más o menos cuando acaba el coro).
+    // Cambia solo este número si quieres que dure más o menos.
+    duracionExperiencia: 75,
+
+    // Estos dos se calculan solos a partir de la duración de arriba.
+    tiempoFoto: 50,
+    tiempoMensaje: 62
+  };
+  /* ========================================================= */
+
+  const $ = (sel) => document.querySelector(sel);
+  const garden = $("#garden");
+
+  // Pinta los textos configurables
+  $("#introLine1").textContent = CONFIG.introLinea1;
+  $("#introLine2").textContent = CONFIG.introLinea2;
+  $("#openGift").textContent = CONFIG.textoBoton;
+  $("#msgBody").textContent = CONFIG.mensaje;
+  $("#msgPara").style.display = "none"; // el nombre ahora vive en la dedicatoria final
+  $("#msgFinal").textContent = CONFIG.fraseFinal;
+  $("#dedTitle").textContent = CONFIG.dedicatoriaTitulo;
+  $("#dedNumber").textContent = CONFIG.dedicatoriaNumero;
+  $("#dedNames").textContent = CONFIG.dedicatoriaNombres;
+  $("#photoImg").src = CONFIG.archivoFoto;
+  $("#photoCaption").textContent = CONFIG.pieDeFoto;
+
+  /* ---------- Estrellas de fondo ---------- */
+  (function stars(){
+    const wrap = $("#stars");
+    const n = window.innerWidth < 600 ? 30 : 55;
+    for(let i=0;i<n;i++){
+      const s = document.createElement("div");
+      s.className = "star";
+      s.style.left = Math.random()*100 + "vw";
+      s.style.top = Math.random()*55 + "vh";
+      s.style.animationDelay = (Math.random()*3.5) + "s";
+      wrap.appendChild(s);
+    }
+  })();
+
+  /* ---------- Generación de flores SVG ---------- */
+  function petalPath(kind){
+    // kind: 'round' (girasol) o 'slim' (margarita)
+    return kind === "round"
+      ? "M0,0 C 10,-4 10,-20 0,-26 C -10,-20 -10,-4 0,0 Z"
+      : "M0,0 C 6,-6 5,-24 0,-30 C -5,-24 -6,-6 0,0 Z";
+  }
+
+  function buildFlowerSVG(kind, hue){
+    const petals = kind === "round" ? 13 : 11;
+    const petalScale = kind === "round" ? 1 : 0.82;
+    const petalColorA = kind === "round" ? "var(--gold)" : "#ffe07d";
+    const petalColorB = kind === "round" ? "var(--petal-deep)" : "var(--gold-deep)";
+    const centerR = kind === "round" ? 15 : 7;
+    const centerFill = kind === "round"
+      ? "radial-gradient(circle at 40% 35%, #7a4a1f, #4a2c10)"
+      : "radial-gradient(circle at 40% 35%, #ffd66b, #e8a33d)";
+
+    let petalEls = "";
+    for(let i=0;i<petals;i++){
+      const angle = (360/petals)*i;
+      petalEls += `<path d="${petalPath(kind)}" transform="translate(50,60) rotate(${angle}) scale(${petalScale})" fill="url(#g_${kind})" stroke="${petalColorB}" stroke-width="0.6" opacity="0.97"/>`;
+    }
+
+    const seeds = kind === "round"
+      ? Array.from({length:10}).map(()=> {
+          const a = Math.random()*Math.PI*2;
+          const r = Math.random()*8;
+          const x = 50 + Math.cos(a)*r;
+          const y = 60 + Math.sin(a)*r;
+          return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="0.9" fill="#2e1a0a" opacity="0.55"/>`;
+        }).join("")
+      : "";
+
+    return `
+    <svg viewBox="0 0 100 300" width="${kind==="round"?110:80}" height="${kind==="round"?300:260}">
+      <defs>
+        <linearGradient id="g_${kind}" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0%" stop-color="${petalColorB}"/>
+          <stop offset="100%" stop-color="${petalColorA}"/>
+        </linearGradient>
+      </defs>
+      <path d="M50,300 C 47,230 53,160 50,95" stroke="var(--leaf-dark)" stroke-width="4.2" fill="none" stroke-linecap="round"/>
+      <path d="M50,205 C 30,198 14,212 6,235 C 26,236 42,226 50,210 Z" fill="var(--leaf)"/>
+      <path d="M50,150 C 72,142 88,155 96,178 C 76,180 60,170 50,155 Z" fill="var(--leaf-dark)"/>
+      <g>${petalEls}</g>
+      <circle cx="50" cy="60" r="${centerR}" fill="${kind==="round" ? "#4a2c10" : "#e8a33d"}"/>
+      <circle cx="50" cy="60" r="${centerR}" fill="url(#c_${kind})"/>
+      <defs>
+        <radialGradient id="c_${kind}" cx="40%" cy="35%">
+          <stop offset="0%" stop-color="${kind==="round" ? "#8a5a2a" : "#ffe07d"}"/>
+          <stop offset="100%" stop-color="${kind==="round" ? "#3a2410" : "#e8a33d"}"/>
+        </radialGradient>
+      </defs>
+      ${seeds}
+    </svg>`;
+  }
+
+  function createFlower(opts){
+    const wrap = document.createElement("div");
+    wrap.className = "flower";
+    wrap.style.left = opts.left + "%";
+    wrap.style.bottom = opts.bottom + "%";
+    wrap.style.zIndex = String(opts.z);
+    wrap.style.animationDelay = opts.growDelay + "s";
+    wrap.style.setProperty("transform", "");
+    wrap.style.width = opts.width + "px";
+
+    const swayWrap = document.createElement("div");
+    swayWrap.className = "sway";
+    swayWrap.style.animationDuration = opts.swayDur + "s";
+    swayWrap.style.animationDelay = opts.swayDelay + "s";
+    swayWrap.style.opacity = String(opts.opacity);
+    swayWrap.innerHTML = buildFlowerSVG(opts.kind);
+
+    wrap.appendChild(swayWrap);
+    wrap.addEventListener("click", () => bumpFlower(wrap));
+    wrap.addEventListener("touchstart", (e) => { bumpFlower(wrap); }, {passive:true});
+    return wrap;
+  }
+
+  function bumpFlower(el){
+    el.classList.remove("pulse");
+    void el.offsetWidth; // reinicia animación
+    el.classList.add("pulse");
+    const rect = el.getBoundingClientRect();
+    spawnSparkleBurst(rect.left + rect.width/2, rect.top + rect.height*0.25, 6);
+  }
+
+  /* ---------- Sembrar el jardín ---------- */
+  function seedGarden(){
+    garden.innerHTML = "";
+    const isMobile = window.innerWidth < 620;
+    const backCount = isMobile ? 9 : 14;
+    const midCount  = isMobile ? 7 : 11;
+    const frontCount= isMobile ? 6 : 9;
+
+    const layers = [
+      { count: backCount,  z:1, widthRange:[46,62],  bottomRange:[2,10], opacity:0.65, growDelayBase:0.0 },
+      { count: midCount,   z:2, widthRange:[64,86],  bottomRange:[0,7],  opacity:0.85, growDelayBase:0.25 },
+      { count: frontCount, z:3, widthRange:[92,130], bottomRange:[-2,4], opacity:1,    growDelayBase:0.5 },
+    ];
+
+    let order = 0;
+    layers.forEach(layer=>{
+      for(let i=0;i<layer.count;i++){
+        const width = rand(layer.widthRange[0], layer.widthRange[1]);
+        const left = rand(2, 96);
+        const bottom = rand(layer.bottomRange[0], layer.bottomRange[1]);
+        const kind = Math.random() < 0.55 ? "round" : "slim";
+        const growDelay = layer.growDelayBase + order * 0.045 + Math.random()*0.3;
+        const swayDur = rand(4, 7.5);
+        const swayDelay = rand(0, 3);
+
+        const f = createFlower({
+          left, bottom, z:layer.z, width, kind,
+          growDelay, swayDur, swayDelay, opacity: layer.opacity
+        });
+        garden.appendChild(f);
+        order++;
+      }
+    });
+  }
+
+  function rand(min, max){ return Math.random()*(max-min)+min; }
+
+  /* ---------- Pétalos flotando ---------- */
+  let petalInterval = null;
+  function spawnPetal(){
+    const p = document.createElement("div");
+    p.className = "petal";
+    const startX = rand(0, 100);
+    const drift = rand(-18, 18);
+    const duration = rand(7, 13);
+    p.style.left = startX + "vw";
+    p.style.setProperty("--driftx", drift + "vw");
+    p.style.animationDuration = duration + "s";
+    p.style.transform = `rotate(${rand(0,360)}deg)`;
+    p.style.width = rand(9,16) + "px";
+    p.style.height = rand(7,12) + "px";
+    document.body.appendChild(p);
+    p.addEventListener("animationend", () => p.remove());
+  }
+
+  function startPetals(){
+    if(petalInterval) return;
+    petalInterval = setInterval(spawnPetal, 900);
+  }
+  function stopPetals(){
+    clearInterval(petalInterval);
+    petalInterval = null;
+  }
+
+  /* ---------- Brillos cálidos ---------- */
+  let sparkleInterval = null;
+  function spawnSparkle(){
+    const s = document.createElement("div");
+    s.className = "sparkle";
+    s.style.left = rand(4,96) + "vw";
+    s.style.top = rand(20,85) + "vh";
+    document.body.appendChild(s);
+    s.addEventListener("animationend", () => s.remove());
+  }
+  function spawnSparkleBurst(x,y,count){
+    for(let i=0;i<count;i++){
+      const s = document.createElement("div");
+      s.className = "sparkle";
+      s.style.left = (x + rand(-24,24)) + "px";
+      s.style.top = (y + rand(-16,16)) + "px";
+      document.body.appendChild(s);
+      s.addEventListener("animationend", () => s.remove());
+    }
+  }
+  function startSparkles(){
+    if(sparkleInterval) return;
+    sparkleInterval = setInterval(spawnSparkle, 650);
+  }
+  function stopSparkles(){
+    clearInterval(sparkleInterval);
+    sparkleInterval = null;
+  }
+
+  /* ---------- Florecitas alrededor de la foto ---------- */
+  function miniFlowerSVG(){
+    let petalEls = "";
+    const petals = 12;
+    for(let i=0;i<petals;i++){
+      const angle = (360/petals)*i;
+      petalEls += `<path d="M0,0 C 10,-4 10,-20 0,-26 C -10,-20 -10,-4 0,0 Z" transform="translate(50,42) rotate(${angle})" fill="url(#mg)" stroke="var(--petal-deep)" stroke-width="0.7"/>`;
+    }
+    return `
+    <svg class="photo-flower" viewBox="0 0 100 100">
+      <defs>
+        <linearGradient id="mg" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0%" stop-color="var(--gold-deep)"/>
+          <stop offset="100%" stop-color="#ffe07d"/>
+        </linearGradient>
+      </defs>
+      <path d="M50,100 C 48,80 52,64 50,52" stroke="var(--leaf-dark)" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M50,84 C 34,80 24,88 18,100 C 34,100 44,94 50,86 Z" fill="var(--leaf)"/>
+      <g>${petalEls}</g>
+      <circle cx="50" cy="42" r="13" fill="#4a2c10"/>
+      <circle cx="50" cy="42" r="13" fill="url(#mc)"/>
+      <defs>
+        <radialGradient id="mc" cx="40%" cy="35%">
+          <stop offset="0%" stop-color="#8a5a2a"/>
+          <stop offset="100%" stop-color="#3a2410"/>
+        </radialGradient>
+      </defs>
+    </svg>`;
+  }
+
+  (function decorarFoto(){
+    const frame = $("#photoFrame");
+    const posiciones = ["ph-tl","ph-tr","ph-bl","ph-br"];
+    posiciones.forEach((cls, i) => {
+      const holder = document.createElement("div");
+      holder.innerHTML = miniFlowerSVG();
+      const svg = holder.firstElementChild;
+      svg.classList.add(cls);
+      svg.style.animationDelay = (i * 0.9) + "s";
+      frame.appendChild(svg);
+    });
+  })();
+
+  /* ---------- Fotos flotantes durante la canción ---------- */
+  function conFallbackDeExtension(img, ruta){
+    const base = ruta.replace(/\.[^.]+$/, "");
+    let i = 0;
+    img.addEventListener("error", function reintento(){
+      const exts = CONFIG.extensionesAlternativas;
+      while(i < exts.length){
+        const cand = base + exts[i++];
+        if(cand !== ruta){ img.src = cand; return; }
+      }
+      img.closest(".floatPhoto")?.remove();
+    });
+    img.src = ruta;
+  }
+
+  let fotoIdx = 0;
+  function spawnFloatPhoto(){
+    const rutas = CONFIG.fotosFlotantes;
+    if(!rutas.length) return;
+    const ruta = rutas[fotoIdx % rutas.length];
+    const pie = CONFIG.piesDeFotoFlotante[fotoIdx % CONFIG.piesDeFotoFlotante.length] || "";
+    fotoIdx++;
+
+    const wrap = document.createElement("div");
+    wrap.className = "floatPhoto";
+    const dur = rand(13, 17);
+    wrap.style.animationDuration = dur + "s";
+    wrap.style.setProperty("--rot", rand(-5, 5).toFixed(1) + "deg");
+    // Posición variada, lejos del centro-bajo donde luego va la tarjeta
+    const lado = fotoIdx % 2 === 0 ? rand(6, 26) : rand(56, 74);
+    wrap.style.left = lado + "vw";
+    wrap.style.top = rand(16, 42) + "vh";
+
+    wrap.innerHTML = `
+      <div class="fp-glow"></div>
+      <div class="fp-inner">
+        <img alt="">
+        <div class="fp-cap">${pie}</div>
+      </div>`;
+    conFallbackDeExtension(wrap.querySelector("img"), ruta);
+
+    document.body.appendChild(wrap);
+    const r = wrap.getBoundingClientRect();
+    spawnSparkleBurst(r.left + r.width/2, r.top + r.height/2, 6);
+    wrap.addEventListener("animationend", () => wrap.remove());
+  }
+
+  /* ---------- Firma "Vy & JR 11" flotando ---------- */
+  function spawnLoveTag(){
+    const t = document.createElement("div");
+    t.className = "loveTag";
+    t.textContent = CONFIG.firmaFlotante;
+    t.style.left = rand(10, 55) + "vw";
+    t.style.top = rand(20, 52) + "vh";
+    document.body.appendChild(t);
+    const r = t.getBoundingClientRect();
+    spawnSparkleBurst(r.left + r.width/2, r.top + r.height/2, 8);
+    t.addEventListener("animationend", () => t.remove());
+  }
+
+  /* ---------- Línea de tiempo de toda la experiencia ---------- */
+  let timeline = [];
+  function clearTimeline(){ timeline.forEach(clearTimeout); timeline = []; }
+  function at(seg, fn){ timeline.push(setTimeout(fn, seg*1000)); }
+
+  function buildTimeline(){
+    clearTimeline();
+    const d = CONFIG.duracionExperiencia;
+
+    // La foto grande y el mensaje llegan hacia el final de la experiencia
+    CONFIG.tiempoFoto    = Math.max(d * 0.62, 14);
+    CONFIG.tiempoMensaje = Math.max(d * 0.80, 22);
+
+    // Interludio: fotos y firma alternándose mientras solo hay flores
+    let t = 7;
+    let turno = 0;
+    while(t < CONFIG.tiempoFoto - 6){
+      at(t, (turno % 2 === 0) ? spawnFloatPhoto : spawnLoveTag);
+      t += (turno % 2 === 0) ? 10 : 7;
+      turno++;
+    }
+
+    at(CONFIG.tiempoFoto, showPhoto);
+    at(CONFIG.tiempoMensaje, showMessage);
+    at(CONFIG.tiempoMensaje + 6, spawnLoveTag);
+
+    // Al terminar el coro: la música se apaga suavemente y todo queda visible
+    at(d - 5, fadeOutMusic);
+    at(d, revealAll);
+  }
+
+  function fadeOutMusic(){
+    if(audioEl.paused) return;
+    const pasos = 25;
+    const vol0 = audioEl.volume;
+    let i = 0;
+    const int = setInterval(() => {
+      i++;
+      audioEl.volume = Math.max(0, vol0 * (1 - i/pasos));
+      if(i >= pasos){
+        clearInterval(int);
+        audioEl.pause();
+        audioEl.volume = vol0;
+        musicPlaying = false;
+        $("#musicBtn").textContent = "🎵";
+      }
+    }, 200);
+  }
+
+  /* ---------- Secuencia principal ---------- */
+  let photoShown = false;
+  let messageShown = false;
+
+  function showPhoto(){
+    if(photoShown) return;
+    photoShown = true;
+    const frame = $("#photoFrame");
+    frame.classList.add("show");
+    // brillitos acompañando la aparición
+    const r = frame.getBoundingClientRect();
+    let bursts = 0;
+    const burstInt = setInterval(() => {
+      spawnSparkleBurst(r.left + r.width/2, r.top + r.height/2, 7);
+      if(++bursts >= 5) clearInterval(burstInt);
+    }, 700);
+  }
+
+  function showMessage(){
+    if(messageShown) return;
+    messageShown = true;
+    document.body.classList.add("msg-on");
+    $("#messageCard").classList.add("show");
+  }
+
+  // Al terminar la canción: que todo quede visible, y las flores siguen vivas.
+  function revealAll(){
+    clearTimeline();
+    showPhoto();
+    setTimeout(showMessage, 1800);
+  }
+
+  function openGift(){
+    $("#intro").classList.add("hidden");
+    seedGarden();
+    startPetals();
+    startSparkles();
+    $("#controls").classList.add("show");
+
+    tryStartMusic();
+    buildTimeline();
+  }
+
+  function replay(){
+    $("#messageCard").classList.remove("show");
+    $("#photoFrame").classList.remove("show");
+    document.body.classList.remove("msg-on");
+    photoShown = false;
+    messageShown = false;
+    fotoIdx = 0;
+    clearTimeline();
+    document.querySelectorAll(".floatPhoto, .loveTag").forEach(el => el.remove());
+    stopPetals();
+    stopSparkles();
+    document.querySelectorAll(".petal, .sparkle").forEach(el => el.remove());
+    garden.innerHTML = "";
+    stopMusic();
+    $("#intro").classList.remove("hidden");
+  }
+
+  $("#openGift").addEventListener("click", openGift);
+  $("#replayBtn").addEventListener("click", replay);
+
+  /* ---------- Música ambiental ---------- */
+  const audioEl = $("#bgAudio");
+  let hasRealAudioFile = null; // null = sin comprobar, true/false tras intentarlo
+  let synthStarted = false;
+  let synthNodes = null;
+  let audioCtx = null;
+
+  audioEl.src = CONFIG.archivoMusica;
+  audioEl.removeAttribute("loop"); // queremos saber cuándo termina la canción
+  audioEl.volume = 0.85;
+  audioEl.addEventListener("error", () => { hasRealAudioFile = false; });
+  audioEl.addEventListener("canplaythrough", () => { hasRealAudioFile = true; }, {once:true});
+
+  // Cuando la canción termina, todo queda visible (y las flores siguen moviéndose).
+  audioEl.addEventListener("ended", () => {
+    musicPlaying = false;
+    $("#musicBtn").textContent = "🎵";
+    revealAll();
+  });
+
+  // La canción arranca con el clic en "Abre tu regalo" (gesto del usuario),
+  // así los navegadores sí permiten reproducirla.
+  function tryStartMusic(){
+    const p = audioEl.play();
+    if(p && p.catch){
+      p.then(() => {
+        hasRealAudioFile = true;
+        musicPlaying = true;
+        $("#musicBtn").textContent = "🔊";
+      }).catch(() => {
+        // Si el mp3 no se puede reproducir, usamos el pad ambiental de respaldo.
+        startSynthPad();
+        musicPlaying = true;
+        $("#musicBtn").textContent = "🔊";
+      });
+    }
+  }
+
+  function stopMusic(){
+    try{ audioEl.pause(); audioEl.currentTime = 0; }catch(e){}
+    stopSynthPad();
+    musicPlaying = false;
+    $("#musicBtn").textContent = "🎵";
+  }
+
+  function startSynthPad(){
+    if(synthStarted) return;
+    try{
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const masterGain = audioCtx.createGain();
+      masterGain.gain.value = 0.0001;
+      masterGain.connect(audioCtx.destination);
+      masterGain.gain.exponentialRampToValueAtTime(0.06, audioCtx.currentTime + 2.5);
+
+      const freqs = [261.63, 329.63, 392.0, 493.88]; // acorde cálido C - E - G - B
+      const oscillators = freqs.map((f, idx) => {
+        const osc = audioCtx.createOscillator();
+        osc.type = idx % 2 === 0 ? "sine" : "triangle";
+        osc.frequency.value = f;
+        const lfo = audioCtx.createOscillator();
+        lfo.frequency.value = 0.08 + idx*0.02;
+        const lfoGain = audioCtx.createGain();
+        lfoGain.gain.value = 2.2;
+        lfo.connect(lfoGain);
+        lfoGain.connect(osc.frequency);
+        const g = audioCtx.createGain();
+        g.gain.value = 0.18;
+        osc.connect(g);
+        g.connect(masterGain);
+        osc.start();
+        lfo.start();
+        return {osc, lfo, g};
+      });
+
+      synthNodes = { masterGain, oscillators };
+      synthStarted = true;
+    }catch(e){
+      // Web Audio no disponible; se ignora silenciosamente.
+    }
+  }
+
+  function stopSynthPad(){
+    if(!synthStarted || !synthNodes) return;
+    const now = audioCtx.currentTime;
+    synthNodes.masterGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
+    setTimeout(() => {
+      synthNodes.oscillators.forEach(o => { try{ o.osc.stop(); o.lfo.stop(); }catch(e){} });
+      synthStarted = false;
+      synthNodes = null;
+    }, 1300);
+  }
+
+  let musicPlaying = false;
+  $("#musicBtn").addEventListener("click", () => {
+    musicPlaying = !musicPlaying;
+    $("#musicBtn").textContent = musicPlaying ? "🔊" : "🎵";
+
+    if(hasRealAudioFile !== false){
+      if(musicPlaying){
+        audioEl.play().catch(() => { startSynthPad(); });
+      } else {
+        audioEl.pause();
+      }
+    } else {
+      if(musicPlaying){ startSynthPad(); }
+      else{ stopSynthPad(); }
+    }
+  });
+
+})();
+</script>
+</body>
+</html>
